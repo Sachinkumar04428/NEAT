@@ -12,8 +12,8 @@ green = (0,245,0)
 #dot 
 x_dot_start = int(display_width/2)
 y_dot_start = 50
-dot_width = 8
-dot_height = 8
+dot_width = 3
+dot_height = 3
 
 #obstacle
 X_obstacles = [0, 150]
@@ -24,11 +24,11 @@ obs_height = 4
 #goal line
 x_goal = 150
 y_goal = 275
-goal_width = 8 
-goal_height = 8
+goal_width = 4 
+goal_height = 4
 
 #model hyperparameters
-max_moves = 800
+max_moves = 500
 mutation_percent = 2
 pop_size = 500
 max_generation = 100
@@ -39,7 +39,7 @@ forward_vision = 6
 padding_width = forward_vision
 
 #Neural net parameteres
-input_units = 6*6 
+input_units = 6*6 + 2
 hidden_units = 100
 output_units = 4
 
