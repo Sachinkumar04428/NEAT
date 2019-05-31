@@ -66,7 +66,7 @@ def build_game_matrix():
 
 def add_obstacles(g_matrix):
 	for x, y in zip(X_obs, Y_obs):
-		g_matrix[ y : y + constants.obs_height, x : x + constants.obs_width] = 1
+		g_matrix[ y : y + constants.obs_height, x : x + constants.obs_width] = -1
 	return g_matrix
 
 def game_loop():
@@ -87,7 +87,7 @@ def game_loop():
 					pygame.quit()
 					quit()
 
-			pop.move()
+			pop.move(x_goal, y_goal)
 			
 			#checking if game_over
 			game_over, won = pop.check_status()

@@ -129,9 +129,9 @@ class Population:
 		for dots in self.pop:
 			dots.draw(gameDisplay)
 
-	def move(self):
+	def move(self, x_goal, y_goal):
 		for dots in self.pop:
-			dots.move()
+			dots.move(x_goal, y_goal)
 
 
 	#Creating new weights using previous weights (different weights == different individuals)

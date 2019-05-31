@@ -20,39 +20,28 @@ max_moves = constants.max_moves
 x_goal = constants.x_goal
 y_goal = constants.y_goal
 
-f_vis = constants.forward_vision 
-s_vis = int(f_vis/2)   #side vision
-
 class Dot:
 
-	def __init__(self,x,y,Theta1,Theta2, environment):
+	def __init__(self,x,y,Theta1,Theta2, game_matrix):
 		self.x = x
 		self.y = y
 		self.Theta1 = Theta1
 		self.Theta2 = Theta2
 		self.alive = True
 		self.moves = 0
-		self.env = environment
+		self.game_matrix = game_matrix
 		self.velocity = 0
 		
 
-	def move(self):
+	def move(self, x_goal, y_goal):
 
 		if self.alive == True:
 			x_change = 0
 			y_change = 0
 
-			look_input = self.look()
-			#normalised distance from the goal
-			distance_input = np.array([(self.x-x_goal)**2/display_width,(self.y-y_goal)**2/display_height])
-			#normalised position of the dot
-			positional_input = np.array([self.x/display_width,self.y/display_height])
-			inputs = np.hstack((distance_input.ravel(),look_input.ravel(),positional_input.ravel()))
-			'''
-				Trying to create a scenario such that the dot gives more value to the iminent danger
-			'''
-			#inputs = self.look().ravel()
-			action = self.think(inputs)
+			inputs = self.look(x_goal, y_goal)
+
+			action = self.think(inputs.ravel())
 			
 			if action[0] == 1:
 				x_change = -1  #moving left
@@ -73,26 +62,73 @@ class Dot:
 
 			#updating no. of moves
 			self.moves += 1
-	
+			
 	
 	#brain part
-	def look(self):
-		x, y = self.x, self.y
-		inputs = self.get_inputs(x, y)
-		return inputs
+	def look(self, x_goal, y_goal):
+
+		#we will look in all directions in a clockwise manner
+
+		#look up
+		up         = self.lookInDirection(x_goal, y_goal ,y=-1, x=0) 
+		
+		#look up/right
+		up_right   = self.lookInDirection(x_goal, y_goal ,y=-1, x=1)
+		
+		#look right
+		right      = self.lookInDirection(x_goal, y_goal ,y=0, x=1)
+		
+		#look down/right
+		down_right = self.lookInDirection(x_goal, y_goal ,y=1, x=1)
+		
+		#look down
+		down       = self.lookInDirection(x_goal, y_goal ,y=1, x=0)
+		
+		#look down/left
+		down_left  = self.lookInDirection(x_goal, y_goal ,y=1, x=-1)
+		
+		#look left
+		left       = self.lookInDirection(x_goal, y_goal ,y=0, x=-1)
+		
+		#look up/lefts
+		up_left    = self.lookInDirection(x_goal, y_goal ,y=-1, x=-1)
 	
-	def get_inputs(self,x,y):
-		vel = self.velocity
-		if vel == 1:
-			return self.env[y:y+f_vis, x-s_vis:x+s_vis]
-		elif vel == 3:
-			return self.env[y-f_vis:y, x-s_vis:x+s_vis]
-		elif vel == 2:
-			return self.env[y-s_vis:y+s_vis, x:x+f_vis]
-		elif vel == 4:
-			return self.env[y-s_vis:y+s_vis, x-f_vis:x]
-		else:
-			return self.env[x-s_vis:x+s_vis, y-s_vis:y+s_vis]
+		return np.hstack((up,up_right,right, down_right, down, down_left, left, up_left))
+	
+	def lookInDirection(self, x_goal, y_goal , y, x):
+		goal_found = 0
+		obs_distance = 1
+		wall_distance = 1 #starting with 1 as it is the max value it can take
+						  #input to the neural net is 1/wall_distance
+
+		curr_x, curr_y  = self.get_position()
+		check_x, check_y = curr_x + x, curr_y + y #moving one step in the looking direction
+
+		curr_pos_val = self.game_matrix[check_y, check_x]  #game matrix accepts (y,x)
+
+		#keep looking until you find an wall in this direction
+		while check_y>0 and check_y<display_height and check_x>0 and check_x<display_width:
+
+			#since there are chances of goal being an extended rectangle like thing
+			#hence we will use the game matrix to search for the goal, instead of x_goal, y_goal
+			
+			curr_pos_val = self.game_matrix[check_y, check_x]    #game matrix accepts (y,x)
+			
+			if goal_found ==0  and curr_pos_val == 2:   #since the goal was marked with 2 in the game matrix
+				goal_found = 1
+			
+			#break out of the loop if you find an obstacle in the path
+			if curr_pos_val == -1:  #since the obstacle was marked with -1 in the game matrix
+				obs_distance = wall_distance #as it was incremented at each step
+				break
+			
+			wall_distance += 1
+
+			#looking at the next block
+			check_x += x
+			check_y += y
+
+		return np.array([1/wall_distance, 1/obs_distance,goal_found])
 
 	def think(self, inputs):
 		output = forward_propagation(inputs,self.Theta1, self.Theta2)
