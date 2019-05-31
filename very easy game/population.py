@@ -4,6 +4,7 @@ import random
 from dot import Dot
 from scipy import stats
 import constants
+import time
 
 #constants
 display_width = constants.display_width
@@ -75,7 +76,7 @@ class Population:
 			if dot.isAlive():
 				x, y = dot.get_position()
 				
-				if x<=pad or x>=display_width-pad or y<=pad or y>=display_height-pad:  #outside the display area
+				if x<=pad or x>=display_width-pad or y<=pad or y>=display_height-pad:  #touching the boundaries
 					death_type = 1
 					self.kill_dot(i, dot, death_type)
 				
@@ -151,15 +152,13 @@ class Population:
 	def cross_breed(self, Theta1, Theta2, gen):
 		
 		fitness = np.array(self.fitness)
-		print('max fitness ',np.max(fitness))
-		sum = int(np.sum(fitness))
-		fitness = (fitness/sum)*4000*(gen)
-		'''
-			Since with increasing performance  and gen, sum increases
-			and thus average fitness decreases, so multiplying with gen**2
-			to maintain the number of different individuals
-		'''
-		print('max fitness after normalization',np.max(fitness))
+		print('max fitness',np.max(fitness))
+		sum_ = np.sum(fitness)
+		
+		#multiplying with 1000 as the fitness values above are very small
+		#and when rounded of to int , they loose their variance
+		#to prevent it , we mulitply with a big number
+		fitness = np.around((fitness*1000)/sum_)
 		
 		mating_pool = []
 		for i in range(fitness.shape[0]): 
@@ -168,37 +167,64 @@ class Population:
 				mating_pool.append(i)
 		
 		size = len(mating_pool)
-		
+		mating_pool = np.array(mating_pool)
+	
 		#checking if the one with highest fitness
-		#Is the one with highest chance of mating
-		print('do this match',np.argmax(fitness),stats.mode(mating_pool)[0])
+		#Is the one with max copies in mating pool
+		print('dot with highest fitness:',np.argmax(fitness))
+		print('dot with highest occurence in mating pool:',stats.mode(mating_pool)[0], end='\n\n')
 
 		Theta1_new = [0 for i in range(self.number)]
 		Theta2_new = [0 for i in range(self.number)]
 
 		for i in range(0,self.number,2):
 			#selecting two random individuals from mating pool
-			a = mating_pool[random.randint(0,size-1)]
-			b = mating_pool[random.randint(0,size-1)]
+			rand_index_1 = random.randint(0,size-1)
+			rand_index_2 = random.randint(0,size-1)
+			parent_1 = mating_pool[rand_index_1]
+			parent_2 = mating_pool[rand_index_2]
 
+			fit_1 = len(np.where(mating_pool==parent_1)[0])
+			fit_2 = len(np.where(mating_pool==parent_2)[0])
+			
 			#creating two new individuals from the above selected individuals
-			Theta1_new[i], Theta1_new[i+1] = mate(Theta1[a], Theta1[b])  
-			Theta2_new[i], Theta2_new[i+1] = mate(Theta2[a], Theta2[b])
+			Theta1_new[i], Theta1_new[i+1] = mate(Theta1[parent_1], Theta1[parent_2], fit_1, fit_2)  
+			Theta2_new[i], Theta2_new[i+1] = mate(Theta2[parent_1], Theta2[parent_2], fit_1, fit_2)
 			
 		return Theta1_new, Theta2_new
 
-def mate(theta1, theta2):
+def mate(theta1, theta2, fit_1, fit_2):
 	shape = theta1.shape
+	#flattening the matrices
 	theta1, theta2 = theta1.ravel(), theta2.ravel()
-	#selecting the cross over point to be half
-	cross_over_point = int(theta1.shape[0]/2)
+	size = theta1.shape[0]
 
-	theta1_new = np.hstack((theta1[:cross_over_point],theta2[cross_over_point:]))
-	theta2_new = np.hstack((theta1[cross_over_point:],theta2[:cross_over_point]))
+	#number of genes to be selected from parent 1 
+	#parent 2 would be then size-gene_1
+	gene_1 = int((fit_1*size) / (fit_1 + fit_2))
+	
+	#dividing chromosom size into 2 group of RANDOM GENE LOCATIONS 
+	# of sizes proportional to number of genes to be selected from each parent 
+	random_array = np.random.permutation(np.arange(size))
+	rand_indices_1 = random_array[:gene_1]
+	rand_indices_2 = random_array[gene_1:]
 
+	#creating two new chromosomes
+	theta1_new = np.zeros(size)
+	theta2_new = np.zeros(size)
+
+	#passing genes of selected GENE LOCATIONS from both the parents
+	theta1_new[rand_indices_1] = theta1[rand_indices_1]  # from parent 1
+	theta1_new[rand_indices_2] = theta2[rand_indices_2]  # from parent 2
+
+	theta2_new[rand_indices_1] = theta2[rand_indices_1]  #from parent 2
+	theta2_new[rand_indices_2] = theta1[rand_indices_2]  #from parent 1
+	
+	#mutating the new childs
 	theta1_new = mutate(theta1_new)
 	theta2_new = mutate(theta2_new)
 	
+	#converting vectors to matrices
 	theta1_new , theta2_new = theta1_new.reshape(shape), theta2_new.reshape(shape)
 	return theta1_new, theta2_new
 

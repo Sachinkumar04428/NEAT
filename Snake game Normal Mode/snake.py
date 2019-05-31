@@ -1,7 +1,6 @@
 #Snake class
 import pygame
 
-
 class Snake:
 
 	red = (220,0,0)

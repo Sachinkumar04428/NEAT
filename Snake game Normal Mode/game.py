@@ -1,7 +1,6 @@
 import pygame
 import math
 import random
-import time
 from snake import Snake
 import time
 

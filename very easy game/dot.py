@@ -42,9 +42,15 @@ class Dot:
 			x_change = 0
 			y_change = 0
 
-			directional_input = self.look()
-			positional_input = np.array([self.x,self.y])
-			inputs = np.hstack((directional_input.ravel(),positional_input.ravel()))
+			look_input = self.look()
+			#normalised distance from the goal
+			distance_input = np.array([(self.x-x_goal)**2/display_width,(self.y-y_goal)**2/display_height])
+			#normalised position of the dot
+			positional_input = np.array([self.x/display_width,self.y/display_height])
+			inputs = np.hstack((distance_input.ravel(),look_input.ravel(),positional_input.ravel()))
+			'''
+				Trying to create a scenario such that the dot gives more value to the iminent danger
+			'''
 			#inputs = self.look().ravel()
 			action = self.think(inputs)
 			
@@ -82,9 +88,9 @@ class Dot:
 		elif vel == 3:
 			return self.env[y-f_vis:y, x-s_vis:x+s_vis]
 		elif vel == 2:
-			return self.env[x:x+f_vis, y-s_vis:y+s_vis]
+			return self.env[y-s_vis:y+s_vis, x:x+f_vis]
 		elif vel == 4:
-			return self.env[x-f_vis:x, y-s_vis:y+s_vis]
+			return self.env[y-s_vis:y+s_vis, x-f_vis:x]
 		else:
 			return self.env[x-s_vis:x+s_vis, y-s_vis:y+s_vis]
 
@@ -112,15 +118,13 @@ class Dot:
 	def kill(self, death_type):
 		fitness = self.cal_fitness(self.x, self.y )
 		
-		if death_type == 1:  #it's a crime to die on boundaries
-			fitness -= 0.01
-		
+		#no descrimination on death type as of now
 		self.alive = False
 		return fitness
 
 	def cal_fitness(self, x , y):
 		distance = (x - x_goal)**2 + (y - y_goal)**2
-		fitness = 1000/int(distance)
+		fitness = 10000/int(distance)
 		return fitness
 
 	#getters
