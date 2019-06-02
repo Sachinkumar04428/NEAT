@@ -123,11 +123,11 @@ class Dot:
 				break
 			
 			wall_distance += 1
-
+			
 			#looking at the next block
 			check_x += x
 			check_y += y
-
+		
 		return np.array([1/wall_distance, 1/obs_distance,goal_found])
 
 	def think(self, inputs):

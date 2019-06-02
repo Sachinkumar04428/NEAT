@@ -80,8 +80,8 @@ class Population:
 					death_type = 1
 					self.kill_dot(i, dot, death_type)
 				
-				for x_obs,y_obs in zip(X_obs, Y_obs):
-					if self.collided(x, y, dot_width, dot_height, x_obs, y_obs, obs_width ,obs_height):
+				for i in range(len(X_obs)):
+					if self.collided(x, y, dot_width, dot_height, X_obs[i], Y_obs[i], obs_width[i] ,obs_height[i]):
 						death_type = 2
 						self.kill_dot(i, dot, death_type)
 				
@@ -167,6 +167,7 @@ class Population:
 				mating_pool.append(i)
 		
 		size = len(mating_pool)
+		print('size',size)
 		mating_pool = np.array(mating_pool)
 	
 		#checking if the one with highest fitness

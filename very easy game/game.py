@@ -31,19 +31,22 @@ y_goal = constants.y_goal
 #obstacles
 X_obs = constants.X_obstacles
 Y_obs = constants.Y_obstacles
+obs_width = constants.obs_width
+obs_height = constants.obs_height
 
 def draw_goal():
 	pygame.draw.rect(gameDisplay, green, [x_goal,y_goal,constants.goal_width, constants.goal_height])
 
 def display_obstacles():
-	for x,y in zip(X_obs,Y_obs):
-		pygame.draw.rect(gameDisplay, blue, [x,y, constants.obs_width, constants.obs_height])
+	obstacles_num = len(X_obs)
+	for i in range(obstacles_num):
+		pygame.draw.rect(gameDisplay, blue, [X_obs[i], Y_obs[i],  obs_width[i], constants.obs_height[i]])
 
 def update_gen(count):
 	font = pygame.font.SysFont(None, 25)
 	text = font.render("gen: "+str(count), True, blue)
 	#displaying the textBox
-	gameDisplay.blit(text,(1,1))
+	gameDisplay.blit(text,(140,1))
 
 def build_game_matrix():
 	g_matrix = np.zeros(( display_height,display_width))
@@ -65,8 +68,9 @@ def build_game_matrix():
 	return g_matrix
 
 def add_obstacles(g_matrix):
-	for x, y in zip(X_obs, Y_obs):
-		g_matrix[ y : y + constants.obs_height, x : x + constants.obs_width] = -1
+	obstacles_num = len(X_obs)
+	for i in range(obstacles_num):
+		g_matrix[ Y_obs[i] : Y_obs[i] + obs_height[i], X_obs[i] : X_obs[i] + obs_width[i]] = -1
 	return g_matrix
 
 def game_loop():
